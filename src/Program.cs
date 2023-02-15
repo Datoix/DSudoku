@@ -8,6 +8,6 @@ try {
     } else {
         Console.WriteLine("Could not solve");
     }
-} catch {
-    Console.WriteLine("Invalid file content");
+} catch(Exception e) {
+    Console.WriteLine(e.Message);
 }

@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.Json.Serialization;
 
 namespace DSudoku;
 public class Sudoku {
@@ -8,16 +7,21 @@ public class Sudoku {
     private readonly int _boxSize;
     private readonly int _maxValue;
 
+    private const string ExceptionMessage = "Invalid file content";
+
     public Sudoku(int[,] data, int maxValue) {
         _data = data;
         _maxValue = maxValue;
         _size = data.GetLength(0);
-        _boxSize = (int)Math.Sqrt(_size);
+        double boxSize = Math.Sqrt(_size);
+        if (boxSize != (int)boxSize) throw new(ExceptionMessage);
+
+        _boxSize = (int)boxSize;
     }
 
     private Coord? FindEmpty() {
-        for (int i = 0; i < _size; ++i) { 
-            for (int j = 0; j < _size; ++j) { 
+        for (int i = 0; i < _size; ++i) {
+            for (int j = 0; j < _size; ++j) {
                 if (_data[i, j] == 0) return new(i, j);
             }
         }
@@ -39,13 +43,13 @@ public class Sudoku {
             for (int j = boxStart.Y; j < boxEnd.Y; ++j) {
                 if (_data[i, j] == value) {
                     return false;
-                }   
+                }
             }
         }
 
         return true;
     }
-    
+
     public bool Solve() {
         if (FindEmpty() is Coord coord) {
             for (int i = 1; i < _maxValue + 1; ++i) {
@@ -62,24 +66,31 @@ public class Sudoku {
         return false;
     }
 
-    public static Sudoku FromFile(string path) {
+    public static Sudoku FromFile(string path, char delimiter = ' ') {
         var lines = File.ReadAllLines(path);
-        int[,] data = new int[lines.Length, lines.Length]; // rows count = columns count
+        var data = new int[lines.Length, lines.Length]; // rows count = columns count
 
         for (int i = 0; i < lines.Length; ++i) {
-            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+            var line = lines[i];
 
-            var splitted = lines[i].Split(' ');
-            if (splitted.Length != lines.Length) {
-                throw new Exception("Invalid file content");
-            }
+            if (delimiter == '\0') {
+                if (line.Length != lines.Length) throw new(ExceptionMessage);
 
-            for (int j = 0; j < splitted.Length; ++j) {
-                data[i, j] = int.Parse(splitted[j]);
+                for (int j = 0; j < line.Length; ++j) {
+                    data[i, j] = int.Parse(line[j].ToString());
+                }
+            } else {
+                var splitted = lines[i].Split(delimiter);
+
+                if (splitted.Length != lines.Length) throw new(ExceptionMessage);
+
+                for (int j = 0; j < splitted.Length; ++j) {
+                    data[i, j] = int.Parse(splitted[j]);
+                }
             }
         }
 
-        return new Sudoku(data, data.GetLength(0));
+        return new(data, data.GetLength(0));
     }
 
     public override string ToString() {
